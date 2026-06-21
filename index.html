@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escala de Técnicos Acelere</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, 'Segoe UI', 'Inter', sans-serif; }
+        body { background: #DEEFE7; min-height: 100vh; width: 100%; }
+        .app-container { display: flex; min-height: 100vh; width: 100%; }
+        .sidebar { width: 280px; background: #002333; color: white; display: flex; flex-direction: column; position: fixed; height: 100vh; overflow-y: auto; transition: all 0.3s; z-index: 100; }
+        .logo { padding: 1.8rem 1.5rem; border-bottom: 2px solid #159A9C; margin-bottom: 1.5rem; }
+        .logo h2 { font-size: 1.8rem; color: white; }
+        .logo p { font-size: 0.8rem; color: #B4BEC9; margin-top: 0.3rem; }
+        .user-info { padding: 1rem 1.5rem; background: rgba(21,154,156,0.2); margin: 0 1rem 1rem 1rem; border-radius: 1rem; border-left: 3px solid #159A9C; display: flex; align-items: center; gap: 12px; }
+        .user-info i { font-size: 2rem; color: #159A9C; }
+        .user-info .user-details { flex: 1; }
+        .user-info .user-name { font-weight: 600; font-size: 1rem; }
+        .user-info .user-role { font-size: 0.8rem; color: #B4BEC9; margin-top: 0.3rem; }
+        .nav-menu { flex: 1; padding: 0 1rem; }
+        .nav-item { display: flex; align-items: center; gap: 12px; padding: 0.9rem 1rem; margin: 0.3rem 0; border-radius: 0.8rem; cursor: pointer; transition: all 0.2s; color: #DEEFE7; }
+        .nav-item i { width: 20px; font-size: 1.1rem; }
+        .nav-item:hover { background: rgba(21,154,156,0.3); }
+        .nav-item.active { background: #159A9C; color: white; }
+        .nav-item .text { font-weight: 500; }
+        .logout-btn { margin: 1.5rem; padding: 0.8rem; background: rgba(180,190,201,0.2); border: 1px solid #B4BEC9; border-radius: 0.8rem; text-align: center; cursor: pointer; transition: all 0.2s; color: #DEEFE7; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .logout-btn:hover { background: #159A9C; border-color: #159A9C; }
+        .main-content { flex: 1; margin-left: 280px; background: #FFFFFF; min-height: 100vh; }
+        .content-header { background: white; padding: 1.5rem 2rem; border-bottom: 1px solid #E2E9F0; }
+        .content-header h1 { color: #002333; font-size: 1.8rem; }
+        .content-header p { color: #5c7e8c; margin-top: 0.3rem; }
+        .content-body { padding: 2rem; }
+        .card { background: white; border-radius: 1rem; border: 1px solid #EAF0F5; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 2px 8px rgba(0,35,51,0.05); }
+        .card-title { font-size: 1.2rem; font-weight: 600; color: #002333; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 2px solid #159A9C; display: inline-block; }
+        .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 1.5rem; }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 200px; }
+        .btn { padding: 0.6rem 1.2rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: #159A9C; color: white; }
+        .btn-primary:hover { background: #0f7a7c; transform: translateY(-1px); }
+        .btn-secondary { background: #DEEFE7; color: #002333; }
+        .btn-secondary:hover { background: #B4BEC9; }
+        .btn-success { background: #27ae60; color: white; }
+        .btn-success:hover { background: #219a52; transform: translateY(-1px); }
+        .btn-danger { background: #c0392b; color: white; }
+        .btn-danger:hover { background: #a93226; }
+        .btn-info { background: #2980b9; color: white; }
+        .btn-info:hover { background: #1f6d9e; transform: translateY(-1px); }
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: #002333; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 0.7rem; border: 1px solid #B4BEC9; border-radius: 0.5rem; font-size: 0.9rem; }
+
+        /* Técnico Accordion */
+        .tecnico-accordion { border: 1px solid #E2E9F0; border-radius: 0.5rem; margin-bottom: 0.5rem; overflow: hidden; }
+        .tecnico-accordion-header { 
+            background: #F9FCFA; padding: 0.8rem 1.2rem; cursor: pointer; 
+            display: flex; align-items: center; justify-content: space-between;
+            transition: background 0.2s;
+            user-select: none;
+        }
+        .tecnico-accordion-header:hover { background: #DEEFE7; }
+        .tecnico-accordion-header .tecnico-nome { font-weight: 600; color: #002333; }
+        .tecnico-accordion-header .tecnico-status { font-size: 0.8rem; color: #5c7e8c; }
+        .tecnico-accordion-header .tecnico-status .count { background: #159A9C; color: white; padding: 0 8px; border-radius: 10px; font-size: 0.7rem; margin-left: 4px; }
+        .tecnico-accordion-header .toggle-icon { transition: transform 0.3s; color: #5c7e8c; }
+        .tecnico-accordion-header .toggle-icon.open { transform: rotate(180deg); }
+        .tecnico-accordion-body { 
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            background: white;
+        }
+        .tecnico-accordion-body.open { max-height: 400px; overflow-y: auto; }
+        .tecnico-accordion-body .checkbox-grid { 
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 6px; padding: 12px 16px;
+        }
+        .tecnico-accordion-body .checkbox-grid label { 
+            display: flex; align-items: center; gap: 6px; 
+            font-weight: 400; font-size: 0.85rem; cursor: pointer; 
+            padding: 4px 8px; border-radius: 4px; transition: background 0.2s;
+        }
+        .tecnico-accordion-body .checkbox-grid label:hover { background: #DEEFE7; }
+        .tecnico-accordion-body .checkbox-grid input[type="checkbox"] { 
+            width: 15px; height: 15px; accent-color: #159A9C; cursor: pointer; 
+        }
+        .tecnico-accordion-body .cidades-selecionadas {
+            padding: 8px 16px 12px 16px; font-size: 0.85rem; color: #5c7e8c;
+            border-top: 1px solid #E2E9F0;
+        }
+        .tecnico-accordion-body .cidades-selecionadas .tag {
+            display: inline-block; background: #DEEFE7; padding: 2px 10px; border-radius: 12px;
+            margin: 2px 4px 2px 0; font-size: 0.8rem; color: #002333;
+        }
+
+        /* Resumo */
+        #resumoEscala table { width: 100%; border-collapse: collapse; }
+        #resumoEscala th, #resumoEscala td { padding: 0.5rem; text-align: left; border-bottom: 1px solid #E2E9F0; }
+        #resumoEscala th { color: #5c7e8c; font-weight: 600; font-size: 0.8rem; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; border-radius: 1rem; width: 92%; max-width: 1000px; max-height: 95vh; display: flex; flex-direction: column; padding: 1.5rem; overflow: hidden; }
+        .modal-content .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0; }
+        .modal-content .modal-body { flex: 1; overflow: auto; display: flex; justify-content: center; align-items: flex-start; background: #f0f0f0; border-radius: 0.5rem; padding: 1rem; }
+        .modal-content .modal-body img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 0.3rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); cursor: grab; }
+        .modal-content .modal-body img:active { cursor: grabbing; }
+        .modal-sm { max-width: 500px !important; height: auto !important; max-height: 90vh; }
+
+        .tech-item { display: inline-block; background: #DEEFE7; padding: 4px 12px; border-radius: 12px; margin: 2px 4px 2px 0; font-size: 0.85rem; }
+
+        /* Área para renderizar a imagem */
+        #imagemContainer { 
+            position: fixed; 
+            top: -9999px; 
+            left: -9999px; 
+            background: white; 
+            padding: 20px; 
+            z-index: -1;
+            width: auto;
+            display: inline-block;
+        }
+        #escalaImagem {
+            background: white;
+            padding: 20px;
+            border-radius: 4px;
+            min-width: 600px;
+        }
+        #escalaImagem .header {
+            background: #002333;
+            color: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-radius: 4px 4px 0 0;
+            margin-bottom: 0;
+        }
+        #escalaImagem .header h1 {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        #escalaImagem .header .data {
+            font-size: 14px;
+            margin-top: 4px;
+            opacity: 0.9;
+        }
+        #escalaImagem table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        #escalaImagem table th {
+            background: #e8edf2;
+            color: #002333;
+            font-weight: 600;
+            padding: 8px 12px;
+            text-align: left;
+            border: 1px solid #d0d7dd;
+        }
+        #escalaImagem table td {
+            padding: 8px 12px;
+            border: 1px solid #d0d7dd;
+            vertical-align: middle;
+        }
+        #escalaImagem table tr:nth-child(even) td {
+            background: #f8fafc;
+        }
+        /* Removido o fundo verde das cidades */
+        #escalaImagem .cidade-tag {
+            display: inline;
+            padding: 0;
+            margin: 0;
+            font-size: 12px;
+            color: #002333;
+            background: transparent;
+            border-radius: 0;
+        }
+        #escalaImagem .cidade-tag:not(:last-child)::after {
+            content: ', ';
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); position: fixed; }
+            .sidebar.open { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .grid-2 { grid-template-columns: 1fr; }
+            .form-row { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="app-container" id="appContainer">
+    <div class="sidebar" id="sidebar">
+        <div class="logo">
+            <h2>Acelere Serviços</h2>
+            <p>Escala de Técnicos Acelere</p>
+        </div>
+        <div class="user-info" id="userInfo">
+            <i class="fa-solid fa-circle-user"></i>
+            <div class="user-details">
+                <div class="user-name" id="userName">Administrador</div>
+                <div class="user-role" id="userRole">Gestor</div>
+            </div>
+        </div>
+        <div class="nav-menu" id="navMenu">
+            <div class="nav-item active" onclick="navigateTo('escala')">
+                <i class="fa-solid fa-calendar-days"></i>
+                <div class="text">Criar Escala</div>
+            </div>
+            <div class="nav-item" onclick="navigateTo('tecnicos')">
+                <i class="fa-solid fa-users"></i>
+                <div class="text">Técnicos</div>
+            </div>
+            <div class="nav-item" onclick="navigateTo('cidades')">
+                <i class="fa-solid fa-city"></i>
+                <div class="text">Cidades</div>
+            </div>
+            <div class="nav-item" onclick="navigateTo('escalasSalvas')">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <div class="text">Escalas Salvas</div>
+            </div>
+        </div>
+        <div class="logout-btn" id="logoutBtn">
+            <i class="fa-solid fa-sign-out-alt"></i> Sair
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="content-header">
+            <h1 id="pageTitle">Criar Escala</h1>
+            <p id="pageDescription">Selecione o dia e marque as cidades para cada técnico</p>
+        </div>
+        <div class="content-body" id="contentBody"></div>
+    </div>
+</div>
+
+<!-- Container oculto para gerar a imagem -->
+<div id="imagemContainer">
+    <div id="escalaImagem">
+        <div class="header">
+            <h1>ESCALA DE TÉCNICOS ACELERE</h1>
+            <div class="data" id="imgData">Dia: --/--/----</div>
+        </div>
+        <div id="imgTabela"></div>
+    </div>
+</div>
+
+<!-- Modal para exibir a imagem -->
+<div id="imageModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-image" style="color:#159A9C;"></i> Visualizar Escala</h3>
+            <div>
+                <button class="btn btn-success" onclick="baixarImagem()"><i class="fa-solid fa-download"></i> Baixar PNG</button>
+                <button class="btn btn-secondary" onclick="fecharModalImagem()"><i class="fa-solid fa-times"></i> Fechar</button>
+            </div>
+        </div>
+        <div class="modal-body" id="modalImageBody">
+            <img id="imagemPreview" src="" alt="Escala de Técnicos" draggable="true">
+        </div>
+    </div>
+</div>
+
+<script>
+
+// ==================== DADOS INICIAIS ====================
+const cidadesPadrao = [
+    'itajubá', 'serra negra', 'santa rita', 'monte sião', 'ouro fino',
+    'bragança paulista', 'extrema', 'pouso alegre', 'jacutinga', 'itapeva',
+    'piranguinho', 'bom repouso', 'itapira', 'munhoz', 'toledo',
+    'borda da mata', 'águas de lindóia', 'pedra bela', 'bueno brandão',
+    'andradas', 'senador amaral', 'albertina', 'campinas', 'inconfidentes',
+    'lindóia', 'tocos do moji', 'maria da fé', 'wenceslau braz',
+    'são josé do alegre', 'machado', 'caxambu', 'minduri', 'baependi',
+    'cruzilia', 'são paulo'
+];
+
+const tecnicosPadrao = [
+    'antônio carlos', 'diego', 'elisson', 'franklin', 'gabriel',
+    'glefiton', 'hayran', 'jezrael', 'josé augusto', 'josé ricardo',
+    'marcelo', 'matheus guilherme', 'mateus henrique', 'rafael henrique',
+    'rodrigo', 'wagner'
+];
+
+// ==================== ESTADO ====================
+let tecnicos = [...tecnicosPadrao];
+let cidades = [...cidadesPadrao];
+let escalasSalvas = [];
+let escalaAtual = { data: '', selecoes: {} };
+let imagemGerada = null;
+
+// ==================== FUNÇÕES AUXILIARES ====================
+function ordenarLista(lista) {
+    return lista.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+}
+
+function capitalizar(str) {
+    return str.split(' ').map(p => p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()).join(' ');
+}
+
+function formatarData(dataStr) {
+    if (!dataStr) return '';
+    const partes = dataStr.split('-');
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+// ==================== NAVEGAÇÃO ====================
+function navigateTo(screen) {
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const active = document.querySelector(`.nav-item[onclick*="${screen}"]`);
+    if (active) active.classList.add('active');
+
+    switch(screen) {
+        case 'escala': renderEscala(); break;
+        case 'tecnicos': renderTecnicos(); break;
+        case 'cidades': renderCidades(); break;
+        case 'escalasSalvas': renderEscalasSalvas(); break;
+        default: renderEscala();
+    }
+}
+
+// ==================== TELA: ESCALA ====================
+function renderEscala() {
+    document.getElementById('pageTitle').textContent = 'Criar Escala';
+    document.getElementById('pageDescription').textContent = 'Clique no nome do técnico para expandir e marcar as cidades';
+
+    const sortedTecnicos = [...tecnicos];
+    ordenarLista(sortedTecnicos);
+    const sortedCidades = [...cidades];
+    ordenarLista(sortedCidades);
+
+    let html = `
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-calendar-day"></i> Data da Escala</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Selecione o Dia</label>
+                    <input type="date" id="dataEscala" value="${escalaAtual.data || ''}" onchange="atualizarDataEscala(this.value)">
+                </div>
+                <div class="form-group" style="display:flex; align-items:flex-end; gap:10px;">
+                    <button class="btn btn-success" onclick="gerarImagem()" style="width:100%;">
+                        <i class="fa-solid fa-image"></i> Gerar Imagem
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-users-gear"></i> Marcação de Cidades por Técnico</h3>
+            <p style="color:#5c7e8c; margin-bottom:1rem;">Clique no nome do técnico para expandir e selecionar as cidades.</p>
+            <div id="accordionContainer">
+    `;
+
+    sortedTecnicos.forEach((tecnico, index) => {
+        const cidadesSelecionadas = escalaAtual.selecoes[tecnico] || [];
+        const isOpen = index === 0;
+        html += `
+            <div class="tecnico-accordion">
+                <div class="tecnico-accordion-header" onclick="toggleAccordion(this)">
+                    <span class="tecnico-nome"><i class="fa-solid fa-user"></i> ${capitalizar(tecnico)}</span>
+                    <span class="tecnico-status">
+                        <i class="fa-solid fa-location-dot"></i> ${cidadesSelecionadas.length} cidade(s)
+                        <span class="count">${cidadesSelecionadas.length > 0 ? cidadesSelecionadas.map(c => capitalizar(c)).join(', ') : 'Nenhuma'}</span>
+                        <i class="fa-solid fa-chevron-down toggle-icon ${isOpen ? 'open' : ''}"></i>
+                    </span>
+                </div>
+                <div class="tecnico-accordion-body ${isOpen ? 'open' : ''}">
+                    <div class="checkbox-grid">
+                        ${sortedCidades.map(cidade => `
+                            <label>
+                                <input type="checkbox" 
+                                       data-tecnico="${tecnico}" 
+                                       data-cidade="${cidade}"
+                                       ${cidadesSelecionadas.includes(cidade) ? 'checked' : ''}
+                                       onchange="toggleCidadeTecnico('${tecnico}', '${cidade}', this.checked)">
+                                ${capitalizar(cidade)}
+                            </label>
+                        `).join('')}
+                    </div>
+                    <div class="cidades-selecionadas">
+                        <i class="fa-solid fa-check-circle" style="color:#159A9C;"></i> 
+                        Selecionadas: 
+                        ${cidadesSelecionadas.length > 0 
+                            ? cidadesSelecionadas.map(c => `<span class="tag">${capitalizar(c)}</span>`).join('') 
+                            : '<span style="color:#B4BEC9;">Nenhuma cidade selecionada</span>'}
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+        </div>
+        <div class="card" style="background:#F9FCFA;">
+            <h3 class="card-title"><i class="fa-solid fa-chart-simple"></i> Resumo da Escala</h3>
+            <div id="resumoEscala">
+                ${gerarResumoEscala()}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('contentBody').innerHTML = html;
+}
+
+function toggleAccordion(header) {
+    const body = header.nextElementSibling;
+    const icon = header.querySelector('.toggle-icon');
+    body.classList.toggle('open');
+    icon.classList.toggle('open');
+}
+
+function atualizarDataEscala(valor) {
+    escalaAtual.data = valor;
+}
+
+function toggleCidadeTecnico(tecnico, cidade, checked) {
+    if (!escalaAtual.selecoes[tecnico]) {
+        escalaAtual.selecoes[tecnico] = [];
+    }
+    if (checked) {
+        if (!escalaAtual.selecoes[tecnico].includes(cidade)) {
+            escalaAtual.selecoes[tecnico].push(cidade);
+            ordenarLista(escalaAtual.selecoes[tecnico]);
+        }
+    } else {
+        escalaAtual.selecoes[tecnico] = escalaAtual.selecoes[tecnico].filter(c => c !== cidade);
+    }
+    
+    atualizarStatusTecnico(tecnico);
+    document.getElementById('resumoEscala').innerHTML = gerarResumoEscala();
+}
+
+function atualizarStatusTecnico(tecnico) {
+    const accordions = document.querySelectorAll('.tecnico-accordion');
+    accordions.forEach(acc => {
+        const header = acc.querySelector('.tecnico-accordion-header');
+        const nomeSpan = header.querySelector('.tecnico-nome');
+        if (nomeSpan.textContent.trim().toLowerCase() === capitalizar(tecnico).toLowerCase() || 
+            nomeSpan.textContent.toLowerCase().includes(tecnico.toLowerCase())) {
+            const cidadesSelecionadas = escalaAtual.selecoes[tecnico] || [];
+            const statusSpan = header.querySelector('.tecnico-status');
+            const countSpan = statusSpan.querySelector('.count');
+            if (countSpan) {
+                countSpan.textContent = cidadesSelecionadas.length > 0 
+                    ? cidadesSelecionadas.map(c => capitalizar(c)).join(', ') 
+                    : 'Nenhuma';
+            }
+            const textNode = statusSpan.childNodes[2];
+            if (textNode) {
+                textNode.textContent = ` ${cidadesSelecionadas.length} cidade(s) `;
+            }
+            const body = acc.querySelector('.tecnico-accordion-body');
+            const selecionadasDiv = body.querySelector('.cidades-selecionadas');
+            if (selecionadasDiv) {
+                selecionadasDiv.innerHTML = `
+                    <i class="fa-solid fa-check-circle" style="color:#159A9C;"></i> 
+                    Selecionadas: 
+                    ${cidadesSelecionadas.length > 0 
+                        ? cidadesSelecionadas.map(c => `<span class="tag">${capitalizar(c)}</span>`).join('') 
+                        : '<span style="color:#B4BEC9;">Nenhuma cidade selecionada</span>'}
+                `;
+            }
+        }
+    });
+}
+
+function gerarResumoEscala() {
+    const sortedTecnicos = [...tecnicos];
+    ordenarLista(sortedTecnicos);
+    let html = '<table><thead><tr><th>Técnico</th><th>Cidades</th></tr></thead><tbody>';
+    let totalCidades = 0;
+    sortedTecnicos.forEach(tecnico => {
+        const cidadesSelecionadas = escalaAtual.selecoes[tecnico] || [];
+        totalCidades += cidadesSelecionadas.length;
+        html += `
+            <tr>
+                <td><strong>${capitalizar(tecnico)}</strong></td>
+                <td>${cidadesSelecionadas.length > 0 ? cidadesSelecionadas.map(c => `<span class="tech-item">${capitalizar(c)}</span>`).join('') : '<span style="color:#B4BEC9;">Nenhuma cidade selecionada</span>'}</td>
+            </tr>
+        `;
+    });
+    html += `</tbody></table>`;
+    html += `<p style="margin-top:0.5rem; color:#5c7e8c; font-size:0.9rem;">
+        <i class="fa-solid fa-info-circle"></i> Total de cidades alocadas: <strong>${totalCidades}</strong>
+    </p>`;
+    return html;
+}
+
+// ==================== TELA: TÉCNICOS ====================
+function renderTecnicos() {
+    document.getElementById('pageTitle').textContent = 'Gerenciar Técnicos';
+    document.getElementById('pageDescription').textContent = 'Adicione ou remova técnicos da lista';
+
+    const sortedTecnicos = [...tecnicos];
+    ordenarLista(sortedTecnicos);
+
+    let html = `
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-user-plus"></i> Adicionar Técnico</h3>
+            <form id="formTecnico" onsubmit="adicionarTecnico(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome do Técnico</label>
+                        <input type="text" id="nomeTecnico" required placeholder="Digite o nome completo">
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:flex-end;">
+                        <button type="submit" class="btn btn-success"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-users"></i> Técnicos Cadastrados (${sortedTecnicos.length})</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                ${sortedTecnicos.map(t => `
+                    <span style="display:inline-flex; align-items:center; gap:6px; background:#DEEFE7; padding:6px 12px; border-radius:20px;">
+                        ${capitalizar(t)}
+                        <button onclick="removerTecnico('${t}')" style="background:none; border:none; color:#c0392b; cursor:pointer; font-size:0.9rem;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </span>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('contentBody').innerHTML = html;
+}
+
+function adicionarTecnico(e) {
+    e.preventDefault();
+    const nome = document.getElementById('nomeTecnico').value.trim();
+    if (!nome) return;
+    if (tecnicos.some(t => t.toLowerCase() === nome.toLowerCase())) {
+        alert('Este técnico já está cadastrado!');
+        return;
+    }
+    tecnicos.push(nome);
+    ordenarLista(tecnicos);
+    document.getElementById('nomeTecnico').value = '';
+    renderTecnicos();
+    if (document.getElementById('pageTitle').textContent === 'Criar Escala') {
+        renderEscala();
+    }
+}
+
+function removerTecnico(nome) {
+    if (!confirm(`Remover "${capitalizar(nome)}" da lista?`)) return;
+    tecnicos = tecnicos.filter(t => t.toLowerCase() !== nome.toLowerCase());
+    delete escalaAtual.selecoes[nome];
+    renderTecnicos();
+    if (document.getElementById('pageTitle').textContent === 'Criar Escala') {
+        renderEscala();
+    }
+}
+
+// ==================== TELA: CIDADES ====================
+function renderCidades() {
+    document.getElementById('pageTitle').textContent = 'Gerenciar Cidades';
+    document.getElementById('pageDescription').textContent = 'Adicione ou remova cidades da lista';
+
+    const sortedCidades = [...cidades];
+    ordenarLista(sortedCidades);
+
+    let html = `
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-city"></i> Adicionar Cidade</h3>
+            <form id="formCidade" onsubmit="adicionarCidade(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Nome da Cidade</label>
+                        <input type="text" id="nomeCidade" required placeholder="Digite o nome da cidade">
+                    </div>
+                    <div class="form-group" style="display:flex; align-items:flex-end;">
+                        <button type="submit" class="btn btn-success"><i class="fa-solid fa-plus"></i> Adicionar</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-list"></i> Cidades Cadastradas (${sortedCidades.length})</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:8px;">
+                ${sortedCidades.map(c => `
+                    <span style="display:inline-flex; align-items:center; gap:6px; background:#DEEFE7; padding:6px 12px; border-radius:20px;">
+                        ${capitalizar(c)}
+                        <button onclick="removerCidade('${c}')" style="background:none; border:none; color:#c0392b; cursor:pointer; font-size:0.9rem;">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </span>
+                `).join('')}
+            </div>
+        </div>
+    `;
+
+    document.getElementById('contentBody').innerHTML = html;
+}
+
+function adicionarCidade(e) {
+    e.preventDefault();
+    const nome = document.getElementById('nomeCidade').value.trim();
+    if (!nome) return;
+    if (cidades.some(c => c.toLowerCase() === nome.toLowerCase())) {
+        alert('Esta cidade já está cadastrada!');
+        return;
+    }
+    cidades.push(nome);
+    ordenarLista(cidades);
+    document.getElementById('nomeCidade').value = '';
+    renderCidades();
+    if (document.getElementById('pageTitle').textContent === 'Criar Escala') {
+        renderEscala();
+    }
+}
+
+function removerCidade(nome) {
+    if (!confirm(`Remover "${capitalizar(nome)}" da lista?`)) return;
+    cidades = cidades.filter(c => c.toLowerCase() !== nome.toLowerCase());
+    Object.keys(escalaAtual.selecoes).forEach(tecnico => {
+        escalaAtual.selecoes[tecnico] = escalaAtual.selecoes[tecnico].filter(c => c.toLowerCase() !== nome.toLowerCase());
+    });
+    renderCidades();
+    if (document.getElementById('pageTitle').textContent === 'Criar Escala') {
+        renderEscala();
+    }
+}
+
+// ==================== TELA: ESCALAS SALVAS ====================
+function renderEscalasSalvas() {
+    document.getElementById('pageTitle').textContent = 'Escalas Salvas';
+    document.getElementById('pageDescription').textContent = 'Histórico de escalas geradas';
+
+    const sortedEscalas = [...escalasSalvas].reverse();
+
+    let html = `
+        <div class="card">
+            <h3 class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> Histórico de Escalas (${sortedEscalas.length})</h3>
+            ${sortedEscalas.length > 0 ? `
+                <table>
+                    <thead><tr><th>Data</th><th>Técnicos</th><th>Cidades Alocadas</th><th>Ações</th></tr></thead>
+                    <tbody>
+                        ${sortedEscalas.map((escala, index) => {
+                            const totalTecnicos = Object.keys(escala.selecoes).filter(t => escala.selecoes[t].length > 0).length;
+                            const totalCidades = Object.values(escala.selecoes).reduce((acc, arr) => acc + arr.length, 0);
+                            return `
+                                <tr>
+                                    <td><strong>${formatarData(escala.data)}</strong></td>
+                                    <td>${totalTecnicos} técnicos</td>
+                                    <td>${totalCidades} cidades</td>
+                                    <td>
+                                        <button class="btn btn-primary" onclick="visualizarEscalaSalva(${sortedEscalas.length - 1 - index})">
+                                            <i class="fa-solid fa-eye"></i> Ver
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        }).join('')}
+                    </tbody>
+                </table>
+            ` : '<p style="color:#5c7e8c;">Nenhuma escala gerada ainda. Crie uma escala e gere a imagem para salvá-la.</p>'}
+        </div>
+    `;
+
+    document.getElementById('contentBody').innerHTML = html;
+}
+
+function visualizarEscalaSalva(index) {
+    const escala = escalasSalvas[index];
+    if (!escala) return;
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.display = 'flex';
+    const sortedTecnicos = Object.keys(escala.selecoes).filter(t => escala.selecoes[t].length > 0);
+    ordenarLista(sortedTecnicos);
+    let html = `
+        <div class="modal-content modal-sm" style="max-width:600px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3><i class="fa-solid fa-calendar-day"></i> Escala - ${formatarData(escala.data)}</h3>
+                <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+                    <i class="fa-solid fa-times"></i> Fechar
+                </button>
+            </div>
+            <div style="max-height:400px; overflow-y:auto;">
+                <table>
+                    <thead><tr><th>Técnico</th><th>Cidades</th></tr></thead>
+                    <tbody>
+                        ${sortedTecnicos.map(tecnico => `
+                            <tr>
+                                <td><strong>${capitalizar(tecnico)}</strong></td>
+                                <td>${escala.selecoes[tecnico].map(c => `<span class="tech-item">${capitalizar(c)}</span>`).join('')}</td>
+                            </tr>
+                        `).join('')}
+                        ${sortedTecnicos.length === 0 ? '<tr><td colspan="2">Nenhum técnico alocado</td></tr>' : ''}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    modal.innerHTML = html;
+    document.body.appendChild(modal);
+}
+
+// ==================== GERAR IMAGEM ====================
+function gerarImagem() {
+    const data = escalaAtual.data;
+    if (!data) {
+        alert('Por favor, selecione uma data para a escala.');
+        return;
+    }
+
+    const sortedTecnicos = [...tecnicos];
+    ordenarLista(sortedTecnicos);
+
+    const temSelecao = Object.values(escalaAtual.selecoes).some(arr => arr.length > 0);
+    if (!temSelecao) {
+        alert('Por favor, marque pelo menos uma cidade para algum técnico.');
+        return;
+    }
+
+    // Prepara o HTML da imagem
+    const dataFormatada = formatarData(data);
+    document.getElementById('imgData').textContent = `Dia: ${dataFormatada}`;
+
+    // Monta a tabela
+    let tabelaHtml = `
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:25%;">TÉCNICO</th>
+                    <th style="width:75%;">CIDADES ALOCADAS</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+
+    sortedTecnicos.forEach(tecnico => {
+        const cidadesSelecionadas = escalaAtual.selecoes[tecnico] || [];
+        if (cidadesSelecionadas.length === 0) return;
+        
+        // Lista as cidades separadas por vírgula sem fundo verde
+        const cidadesHtml = cidadesSelecionadas.map(c => 
+            `<span class="cidade-tag">${capitalizar(c)}</span>`
+        ).join('');
+
+        tabelaHtml += `
+            <tr>
+                <td><strong>${capitalizar(tecnico)}</strong></td>
+                <td>${cidadesHtml}</td>
+            </tr>
+        `;
+    });
+
+    tabelaHtml += `
+            </tbody>
+        </table>
+    `;
+
+    document.getElementById('imgTabela').innerHTML = tabelaHtml;
+
+    // Usa html2canvas para capturar a imagem
+    const elemento = document.getElementById('escalaImagem');
+    
+    // Mostra loading
+    const btnGerar = document.querySelector('.btn-success');
+    const textoOriginal = btnGerar.innerHTML;
+    btnGerar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Gerando...';
+    btnGerar.disabled = true;
+
+    html2canvas(elemento, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: elemento.scrollWidth,
+        height: elemento.scrollHeight,
+        windowWidth: elemento.scrollWidth,
+        windowHeight: elemento.scrollHeight
+    }).then(canvas => {
+        // Converte para PNG
+        const imagemDataUrl = canvas.toDataURL('image/png');
+        imagemGerada = imagemDataUrl;
+
+        // Salva no histórico (com a imagem)
+        const escalaSalva = {
+            data: data,
+            selecoes: JSON.parse(JSON.stringify(escalaAtual.selecoes)),
+            imagem: imagemDataUrl
+        };
+        escalasSalvas.push(escalaSalva);
+
+        // Exibe no modal com a imagem arrastável
+        const imgPreview = document.getElementById('imagemPreview');
+        imgPreview.src = imagemDataUrl;
+        imgPreview.draggable = true;
+        
+        // Configura o drag para permitir arrastar a imagem
+        imgPreview.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('text/plain', '');
+            e.dataTransfer.setData('image/png', imagemDataUrl);
+            // Cria um blob da imagem para arrastar
+            fetch(imagemDataUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                    e.dataTransfer.setData('text/uri-list', imagemDataUrl);
+                    e.dataTransfer.setData('DownloadURL', `image/png:escala_tecnicos.png:${imagemDataUrl}`);
+                });
+        });
+
+        document.getElementById('imageModal').style.display = 'flex';
+
+        // Restaura o botão
+        btnGerar.innerHTML = textoOriginal;
+        btnGerar.disabled = false;
+
+        if (document.getElementById('pageTitle').textContent === 'Escalas Salvas') {
+            renderEscalasSalvas();
+        }
+    }).catch(err => {
+        console.error('Erro ao gerar imagem:', err);
+        alert('Erro ao gerar a imagem. Tente novamente.');
+        btnGerar.innerHTML = textoOriginal;
+        btnGerar.disabled = false;
+    });
+}
+
+function fecharModalImagem() {
+    document.getElementById('imageModal').style.display = 'none';
+    document.getElementById('imagemPreview').src = '';
+}
+
+function baixarImagem() {
+    if (!imagemGerada) {
+        alert('Nenhuma imagem disponível para download.');
+        return;
+    }
+    const link = document.createElement('a');
+    link.download = `escala_tecnicos_${formatarData(escalaAtual.data).replace(/\//g, '_')}.png`;
+    link.href = imagemGerada;
+    link.click();
+}
+
+// Fecha modal com ESC
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') fecharModalImagem();
+});
+
+// Fecha modal clicando fora
+document.getElementById('imageModal').addEventListener('click', function(e) {
+    if (e.target === this) fecharModalImagem();
+});
+
+// ==================== INICIALIZAÇÃO ====================
+ordenarLista(tecnicos);
+ordenarLista(cidades);
+
+const hoje = new Date().toISOString().split('T')[0];
+escalaAtual.data = hoje;
+
+renderEscala();
+
+</script>
+</body>
+</html>
